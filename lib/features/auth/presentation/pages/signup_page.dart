@@ -1,12 +1,15 @@
 import 'package:blog_app/core/common/widgets/loader.dart';
 import 'package:blog_app/core/routes/app_route_constants.dart';
+import 'package:blog_app/core/routes/app_router.dart';
 import 'package:blog_app/core/utils/constants/colors.dart';
 import 'package:blog_app/core/utils/constants/image_strings.dart';
 import 'package:blog_app/core/utils/constants/validation_mixin.dart';
 import 'package:blog_app/core/utils/functions/show_snackbar.dart';
 import 'package:blog_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:blog_app/features/auth/presentation/widgets/auth_field.dart';
+import 'package:blog_app/features/auth/presentation/pages/signin_pag.dart';
+import 'package:blog_app/core/common/widgets/custom_textfield.dart';
 import 'package:blog_app/features/auth/presentation/widgets/custom_button.dart';
+import 'package:blog_app/features/blog/presentation/pages/blog_page.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,7 +25,7 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> with ValidationsMixin {
-  static final signUpKey = GlobalKey<FormState>();
+  final signUpKey = GlobalKey<FormState>();
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -53,7 +56,12 @@ class _SignUpPageState extends State<SignUpPage> with ValidationsMixin {
                 TImages.failure,
               );
             } else if (state is AuthSuccess) {
-              return showSnackBar(
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const BlogPage()),
+                (route) => false, // Remove all routes
+              );
+              showSnackBar(
                 context,
                 "Congratulations!",
                 "You have successfully become a member. Welcome to our community!",
@@ -66,6 +74,9 @@ class _SignUpPageState extends State<SignUpPage> with ValidationsMixin {
             if (state is AuthLoading) {
               return const Loader();
             }
+            bool isPasswordVisible = state is PasswordVisibilityChanged
+                ? state.isPasswordVisible
+                : true;
             return SizedBox(
               width: double.infinity,
               child: Column(
@@ -115,7 +126,8 @@ class _SignUpPageState extends State<SignUpPage> with ValidationsMixin {
                             ),
                           ),
                           SizedBox(height: 6.h),
-                          AuthField(
+                          CustomTextField(
+                            maxLines: 1,
                             controller: nameController,
                             textAlignVertical: TextAlignVertical.bottom,
                             hintText: "Enter your name",
@@ -150,7 +162,8 @@ class _SignUpPageState extends State<SignUpPage> with ValidationsMixin {
                             ),
                           ),
                           SizedBox(height: 6.h),
-                          AuthField(
+                          CustomTextField(
+                            maxLines: 1,
                             controller: emailController,
                             textAlignVertical: TextAlignVertical.bottom,
                             hintText: "Enter your email",
@@ -185,16 +198,26 @@ class _SignUpPageState extends State<SignUpPage> with ValidationsMixin {
                             ),
                           ),
                           SizedBox(height: 6.h),
-                          AuthField(
+                          CustomTextField(
+                            isPassword: isPasswordVisible,
+                            maxLines: 1,
                             controller: passwordController,
                             textAlignVertical: TextAlignVertical.bottom,
                             hintText: "Enter your password",
-                            suffixIcon: Container(
-                              width: double.minPositive,
-                              alignment: Alignment.centerLeft,
-                              child: Icon(
-                                Icons.visibility_outlined,
-                                size: 20.h,
+                            suffixIcon: GestureDetector(
+                              onTap: () {
+                                BlocProvider.of<AuthBloc>(context)
+                                    .add(TogglePasswordVisibilityEvent());
+                              },
+                              child: Container(
+                                width: double.minPositive,
+                                alignment: Alignment.centerLeft,
+                                child: Icon(
+                                  isPasswordVisible
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  size: 20.h,
+                                ),
                               ),
                             ),
                             hintStyle: TextStyle(
@@ -280,7 +303,7 @@ class _SignUpPageState extends State<SignUpPage> with ValidationsMixin {
                     },
                   ),
 
-                  SizedBox(height: 8.h),
+                  SizedBox(height: 18.h),
 
                   //--
 
@@ -301,17 +324,26 @@ class _SignUpPageState extends State<SignUpPage> with ValidationsMixin {
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
                               Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => const SignUpPage()));
+                                  builder: (context) => const SignInPage()));
                               // GoRouter.of(context)
                               //     .goNamed(MyAppRouteConstants.signInRouteName);
+
                               // GoRouter.of(context).pushNamed(
                               //     MyAppRouteConstants.signInRouteName);
+
+                              // AppRouter.returnRouter()
+                              //     .go(MyAppRouteConstants.signInRouteName);
+
+                              // context
+                              //     .goNamed(MyAppRouteConstants.signInRouteName);
                             },
                         ),
                       ],
                     ),
                     textAlign: TextAlign.center,
                   ),
+
+                  SizedBox(height: 18.h),
                 ],
               ),
             );

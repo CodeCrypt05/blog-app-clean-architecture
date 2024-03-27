@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class AuthField extends StatelessWidget {
-  const AuthField({
+class CustomTextField extends StatelessWidget {
+  const CustomTextField({
     super.key,
     this.controller,
     this.onChanged,
@@ -17,7 +17,7 @@ class AuthField extends StatelessWidget {
     this.hintStyle,
     this.errorStyle,
     this.errorMaxLines,
-    this.isPassword = false,
+    this.isPassword,
     this.prefixIcon,
     this.suffixIcon,
     this.onEditingComplete,
@@ -47,7 +47,7 @@ class AuthField extends StatelessWidget {
   final TextStyle? hintStyle;
   final TextStyle? errorStyle;
   final int? errorMaxLines;
-  final bool isPassword;
+  final bool? isPassword;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final TextInputType textInputType;
@@ -75,7 +75,7 @@ class AuthField extends StatelessWidget {
       validator: validator,
       onFieldSubmitted: onFieldSubmitted,
       style: style,
-      obscureText: isPassword,
+      obscureText: isPassword ?? false,
       cursorWidth: 1.6.w,
       scrollPadding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom + 600),

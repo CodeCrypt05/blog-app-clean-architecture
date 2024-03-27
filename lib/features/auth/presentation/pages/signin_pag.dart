@@ -1,13 +1,15 @@
 import 'package:blog_app/core/common/widgets/loader.dart';
 import 'package:blog_app/core/routes/app_route_constants.dart';
+import 'package:blog_app/core/routes/app_router.dart';
 import 'package:blog_app/core/utils/constants/colors.dart';
 import 'package:blog_app/core/utils/constants/image_strings.dart';
 import 'package:blog_app/core/utils/constants/validation_mixin.dart';
 import 'package:blog_app/core/utils/functions/show_snackbar.dart';
 import 'package:blog_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:blog_app/features/auth/presentation/pages/signup_page.dart';
-import 'package:blog_app/features/auth/presentation/widgets/auth_field.dart';
+import 'package:blog_app/core/common/widgets/custom_textfield.dart';
 import 'package:blog_app/features/auth/presentation/widgets/custom_button.dart';
+import 'package:blog_app/features/blog/presentation/pages/blog_page.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +26,7 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> with ValidationsMixin {
-  static final signInKey = GlobalKey<FormState>();
+  final signInKey = GlobalKey<FormState>();
 
   final userEmailController = TextEditingController();
   final userPasswordController = TextEditingController();
@@ -33,6 +35,7 @@ class _SignInPageState extends State<SignInPage> with ValidationsMixin {
   void dispose() {
     userEmailController.dispose();
     userPasswordController.dispose();
+
     super.dispose();
   }
 
@@ -47,13 +50,13 @@ class _SignInPageState extends State<SignInPage> with ValidationsMixin {
               return showSnackBar(
                 context,
                 "Oh snap!",
-                "Something went wrong! Please try again",
+                state.message,
                 TColors.failedBackgroundColor,
                 TColors.failedAssetsColor,
                 TImages.failure,
               );
             } else if (state is AuthSuccess) {
-              return showSnackBar(
+              showSnackBar(
                 context,
                 "Congratulations!",
                 "You have successfully become a member. Welcome to our community!",
@@ -61,11 +64,20 @@ class _SignInPageState extends State<SignInPage> with ValidationsMixin {
                 TColors.successAssetsColor,
                 TImages.success,
               );
+
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => BlogPage()),
+                (route) => false, // Remove all routes
+              );
             }
           }, builder: (context, state) {
             if (state is AuthLoading) {
               return const Loader();
             }
+            bool isPasswordVisible = state is PasswordVisibilityChanged
+                ? state.isPasswordVisible
+                : true;
             return SizedBox(
               width: double.infinity,
               child: Column(
@@ -116,7 +128,8 @@ class _SignInPageState extends State<SignInPage> with ValidationsMixin {
                             ),
                           ),
                           SizedBox(height: 6.h),
-                          AuthField(
+                          CustomTextField(
+                            maxLines: 1,
                             controller: userEmailController,
                             textAlignVertical: TextAlignVertical.bottom,
                             hintText: "Enter your email",
@@ -151,16 +164,26 @@ class _SignInPageState extends State<SignInPage> with ValidationsMixin {
                             ),
                           ),
                           SizedBox(height: 6.h),
-                          AuthField(
+                          CustomTextField(
+                            isPassword: isPasswordVisible,
+                            maxLines: 1,
                             controller: userPasswordController,
                             textAlignVertical: TextAlignVertical.bottom,
                             hintText: "Enter your password",
-                            suffixIcon: Container(
-                              width: double.minPositive,
-                              alignment: Alignment.centerLeft,
-                              child: Icon(
-                                Icons.visibility_outlined,
-                                size: 20.h,
+                            suffixIcon: GestureDetector(
+                              onTap: () {
+                                BlocProvider.of<AuthBloc>(context)
+                                    .add(TogglePasswordVisibilityEvent());
+                              },
+                              child: Container(
+                                width: double.minPositive,
+                                alignment: Alignment.centerLeft,
+                                child: Icon(
+                                  isPasswordVisible
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  size: 20.h,
+                                ),
                               ),
                             ),
                             hintStyle: TextStyle(
@@ -223,13 +246,13 @@ class _SignInPageState extends State<SignInPage> with ValidationsMixin {
                     ],
                   ),
 
-                  SizedBox(height: 98.h),
+                  SizedBox(height: 48.h),
 
                   //-- create ac button
 
                   CustomButton(
                     label: "Log in",
-                    icons: Icon(
+                    icons: const Icon(
                       Icons.arrow_forward,
                       color: Colors.white,
                     ),
@@ -245,7 +268,7 @@ class _SignInPageState extends State<SignInPage> with ValidationsMixin {
                     },
                   ),
 
-                  SizedBox(height: 8.h),
+                  SizedBox(height: 18.h),
 
                   //--
 
@@ -258,24 +281,31 @@ class _SignInPageState extends State<SignInPage> with ValidationsMixin {
                       ),
                       children: [
                         TextSpan(
-                            text: "Sign up now",
-                            style: TextStyle(
-                              color: Color(0XFF2F66ED),
-                              fontWeight: FontWeight.w600,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) => const SignUpPage()));
-                                // GoRouter.of(context).goNamed(
-                                //     MyAppRouteConstants.signUpRouteName);
-                                // GoRouter.of(context).pushNamed(
-                                //     MyAppRouteConstants.signUpRouteName);
-                              }),
+                          text: "Sign up now",
+                          style: TextStyle(
+                            color: Color(0XFF2F66ED),
+                            fontWeight: FontWeight.w600,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => const SignUpPage()));
+                              // GoRouter.of(context)
+                              //     .goNamed(MyAppRouteConstants.signUpRouteName);
+
+                              // GoRouter.of(context).pushNamed(
+                              //     MyAppRouteConstants.signUpRouteName);
+                              // AppRouter.returnRouter()
+                              //     .go(MyAppRouteConstants.signInRouteName);
+
+                              // context.goNamed(MyAppRouteConstants.signUpRouteName);
+                            },
+                        ),
                       ],
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  SizedBox(height: 18.h),
                 ],
               ),
             );
