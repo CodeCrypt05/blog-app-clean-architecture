@@ -15,6 +15,11 @@ import 'package:blog_app/features/blog/domain/repositories/blog_repository.dart'
 import 'package:blog_app/features/blog/domain/usecases/get_all_blogs.dart';
 import 'package:blog_app/features/blog/domain/usecases/upload_blog.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
+import 'package:blog_app/features/news/data/datasources/song_firebase_service.dart';
+import 'package:blog_app/features/news/data/repositories/song_repository_impl.dart';
+import 'package:blog_app/features/news/domain/repositories/song_repository.dart';
+import 'package:blog_app/features/news/domain/usecases/get_all_songs.dart';
+import 'package:blog_app/features/news/presentation/bloc/news_song_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -26,6 +31,7 @@ final serviceLocator = GetIt.instance;
 Future<void> initDependencies() async {
   _initAuth();
   _initBlog();
+  _initNewsSong();
   final supabase = await Supabase.initialize(
     url: AppSecrets.supabaseUrl,
     anonKey: AppSecrets.supabaseAnonKey,
@@ -144,6 +150,28 @@ void _initBlog() {
       () => BlogBloc(
         uploadBlog: serviceLocator(),
         getAllBlogs: serviceLocator(),
+      ),
+    );
+}
+
+void _initNewsSong() {
+  serviceLocator
+
+    //
+    ..registerFactory<SongFirebaseService>(
+      () => SongFirebaseServiceImpl(),
+    )
+    ..registerFactory<SongRepository>(
+      (() => SongRepositoryImpl(serviceLocator())),
+    )
+    ..registerFactory<GetAllSongs>(
+      () => GetAllSongs(
+        songRepository: serviceLocator(),
+      ),
+    )
+    ..registerLazySingleton(
+      () => NewsSongBloc(
+        getAllSongs: serviceLocator(),
       ),
     );
 }
